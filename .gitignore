@@ -1,0 +1,79 @@
+# ==========================================
+# StayEase Hotel Management System
+# Git Ignore Configuration
+# ==========================================
+
+# Maven Build Files
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven Temporary Files
+.mvn/timing.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+
+# Database Credentials
+src/main/resources/db.properties
+src/test/resources/db.properties
+.env
+.env.*
+!.env.example
+
+# IDE Settings
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Log Files
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node.js Dependencies
+node_modules/
+.npm/
+npm-cache/
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Test Reports
+surefire-reports/
+failsafe-reports/
+
+# Local Database Backups
+*.sql.bak
+*.sql.gz
+*.dump
+
+# Keep Project Files
+# pom.xml
+# package.json
+# run.ps1
+# README.md
+# sql/schema.sql
+# src/main/java/
+# src/main/webapp/
+# docs/

@@ -1,0 +1,295 @@
+@startuml StayEase_Class_Diagram
+
+title StayEase Hotel Room Reservation System - UML Class Diagram
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    ArrowColor #14213D
+    BorderColor #14213D
+}
+
+package "com.stayease.model" {
+
+    abstract class Room {
+        - id: int
+        - roomNumber: String
+        - type: String
+        - basePrice: BigDecimal
+        - status: String
+        - description: String
+        + {abstract} getNightlyRate(): BigDecimal
+        + {abstract} getCapacity(): int
+        + {abstract} getFeatures(): String
+        + {static} create(type: String): Room
+        + {static} create(id: int, num: String, type: String, price: BigDecimal, status: String, desc: String): Room
+        + isAvailable(): boolean
+        + isMaintenance(): boolean
+        + getId(): int
+        + setId(id: int): void
+        + getRoomNumber(): String
+        + setRoomNumber(num: String): void
+        + getBasePrice(): BigDecimal
+        + setBasePrice(price: BigDecimal): void
+        + getStatus(): String
+        + setStatus(status: String): void
+        + getDescription(): String
+        + setDescription(desc: String): void
+    }
+
+    class SingleRoom {
+        + SingleRoom()
+        + getNightlyRate(): BigDecimal
+        + getCapacity(): int
+        + getFeatures(): String
+    }
+
+    class DoubleRoom {
+        - {static} MULTIPLIER: BigDecimal = 1.10
+        + DoubleRoom()
+        + getNightlyRate(): BigDecimal
+        + getCapacity(): int
+        + getFeatures(): String
+    }
+
+    class SuiteRoom {
+        - {static} MULTIPLIER: BigDecimal = 1.25
+        - {static} SERVICE_SURCHARGE: BigDecimal = 20.00
+        + SuiteRoom()
+        + getNightlyRate(): BigDecimal
+        + getCapacity(): int
+        + getFeatures(): String
+    }
+
+    Room <|-- SingleRoom
+    Room <|-- DoubleRoom
+    Room <|-- SuiteRoom
+
+    abstract class User {
+        - id: int
+        - fullName: String
+        - email: String
+        - phone: String
+        - passwordHash: String
+        - role: String
+        + {abstract} getDiscountRate(): BigDecimal
+        + {abstract} canManageRooms(): boolean
+        + {static} create(role: String): User
+        + {static} create(id: int, name: String, email: String, phone: String, hash: String, role: String): User
+        + isAdmin(): boolean
+        + isPremium(): boolean
+        + getId(): int
+        + setId(id: int): void
+        + getFullName(): String
+        + setFullName(name: String): void
+        + getEmail(): String
+        + setEmail(email: String): void
+        + getPhone(): String
+        + setPhone(phone: String): void
+        + getPasswordHash(): String
+        + setPasswordHash(hash: String): void
+        + getRole(): String
+        + setRole(role: String): void
+    }
+
+    class AdminUser {
+        + AdminUser()
+        + getDiscountRate(): BigDecimal
+        + canManageRooms(): boolean
+    }
+
+    class RegularGuest {
+        + RegularGuest()
+        + getDiscountRate(): BigDecimal
+        + canManageRooms(): boolean
+    }
+
+    class PremiumGuest {
+        - {static} DISCOUNT_RATE: BigDecimal = 0.10
+        + PremiumGuest()
+        + getDiscountRate(): BigDecimal
+        + canManageRooms(): boolean
+    }
+
+    User <|-- AdminUser
+    User <|-- RegularGuest
+    User <|-- PremiumGuest
+
+    class Reservation {
+        - id: int
+        - userId: int
+        - roomId: int
+        - checkIn: LocalDate
+        - checkOut: LocalDate
+        - guests: int
+        - totalPrice: BigDecimal
+        - status: String
+        - guestName: String
+        - guestEmail: String
+        - roomNumber: String
+        - roomType: String
+        - nightlyRate: BigDecimal
+        + getNumberOfNights(): long
+        + {static} calculateTotalPrice(room: Room, user: User, in: LocalDate, out: LocalDate): BigDecimal
+        + isConfirmed(): boolean
+        + isCancelled(): boolean
+        + getId(): int
+        + setId(id: int): void
+        + getUserId(): int
+        + setUserId(id: int): void
+        + getRoomId(): int
+        + setRoomId(id: int): void
+        + getCheckIn(): LocalDate
+        + setCheckIn(in: LocalDate): void
+        + getCheckOut(): LocalDate
+        + setCheckOut(out: LocalDate): void
+        + getGuests(): int
+        + setGuests(g: int): void
+        + getTotalPrice(): BigDecimal
+        + setTotalPrice(price: BigDecimal): void
+        + getStatus(): String
+        + setStatus(status: String): void
+    }
+
+    Reservation "0..*" --> "1" User : bookedBy
+    Reservation "0..*" --> "1" Room : forRoom
+}
+
+package "com.stayease.dao" {
+    class RoomDAO {
+        + insert(room: Room): int
+        + findById(id: int): Room
+        + findByRoomNumber(num: String): Room
+        + findAll(): List<Room>
+        + search(keyword: String): List<Room>
+        + update(room: Room): boolean
+        + delete(id: int): boolean
+        + findAvailable(checkIn: LocalDate, checkOut: LocalDate, guests: int): List<Room>
+        - mapResultSetToRoom(rs: ResultSet): Room
+    }
+
+    class UserDAO {
+        + insert(user: User): int
+        + findById(id: int): User
+        + findByEmail(email: String): User
+        + findAll(): List<User>
+        + search(keyword: String): List<User>
+        + update(user: User, updatePass: boolean): boolean
+        + delete(id: int): boolean
+        - mapResultSetToUser(rs: ResultSet): User
+    }
+
+    class ReservationDAO {
+        + insert(res: Reservation): int
+        + findById(id: int): Reservation
+        + findByUser(userId: int): List<Reservation>
+        + findAll(): List<Reservation>
+        + cancel(id: int, userId: int, isAdmin: boolean): boolean
+        + delete(id: int): boolean
+        - mapResultSetToReservation(rs: ResultSet): Reservation
+    }
+
+    RoomDAO ..> Room : creates & queries
+    UserDAO ..> User : creates & queries
+    ReservationDAO ..> Reservation : creates & queries
+}
+
+package "com.stayease.servlet" {
+    class RoomServlet {
+        - roomDAO: RoomDAO
+        + init(): void
+        # doGet(req: HttpServletRequest, resp: HttpServletResponse): void
+        # doPost(req: HttpServletRequest, resp: HttpServletResponse): void
+        - listRooms(req, resp): void
+        - showAddForm(req, resp): void
+        - showEditForm(req, resp): void
+        - insertRoom(req, resp): void
+        - updateRoom(req, resp): void
+        - deleteRoom(req, resp): void
+    }
+
+    class UserServlet {
+        - userDAO: UserDAO
+        + init(): void
+        # doGet(req: HttpServletRequest, resp: HttpServletResponse): void
+        # doPost(req: HttpServletRequest, resp: HttpServletResponse): void
+        - showRegisterForm(req, resp): void
+        - showLoginForm(req, resp): void
+        - handleLogout(req, resp): void
+        - showProfile(req, resp): void
+        - listUsers(req, resp): void
+        - handleRegister(req, resp): void
+        - handleLogin(req, resp): void
+        - handleUpdateProfile(req, resp): void
+        - handleDeleteUser(req, resp): void
+    }
+
+    class ReservationServlet {
+        - reservationDAO: ReservationDAO
+        - roomDAO: RoomDAO
+        + init(): void
+        # doGet(req: HttpServletRequest, resp: HttpServletResponse): void
+        # doPost(req: HttpServletRequest, resp: HttpServletResponse): void
+        - handleAvailabilitySearch(req, resp): void
+        - handleBooking(req, resp): void
+        - handleListReservations(req, resp): void
+        - handleCancel(req, resp): void
+        - handleDelete(req, resp): void
+    }
+
+    class HomeServlet {
+        - roomDAO: RoomDAO
+        + init(): void
+        # doGet(req: HttpServletRequest, resp: HttpServletResponse): void
+    }
+
+    RoomServlet --> RoomDAO
+    UserServlet --> UserDAO
+    ReservationServlet --> ReservationDAO
+    ReservationServlet --> RoomDAO
+    HomeServlet --> RoomDAO
+}
+
+package "com.stayease.util" {
+    class DBConnection {
+        - {static} dbDriver: String
+        - {static} dbUrl: String
+        - {static} dbUser: String
+        - {static} dbPassword: String
+        + {static} getConnection(): Connection
+        + {static} resetConfiguration(): void
+    }
+
+    class PasswordUtil {
+        - {static} BCRYPT_LOG_ROUNDS: int = 12
+        + {static} hashPassword(plain: String): String
+        + {static} checkPassword(plain: String, hash: String): boolean
+    }
+
+    class SessionUtil {
+        + {static} getLoggedInUser(req: HttpServletRequest): User
+        + {static} isLoggedIn(req: HttpServletRequest): boolean
+        + {static} isAdmin(req: HttpServletRequest): boolean
+        + {static} setLoggedInUser(req: HttpServletRequest, user: User): void
+        + {static} logout(req: HttpServletRequest): void
+        + {static} setFlashSuccess(req: HttpServletRequest, msg: String): void
+        + {static} setFlashError(req: HttpServletRequest, msg: String): void
+        + {static} transferFlashMessages(req: HttpServletRequest): void
+    }
+
+    class DoubleBookingException {
+        + DoubleBookingException(msg: String)
+    }
+
+    ReservationDAO ..> DoubleBookingException : throws
+    ReservationDAO ..> DBConnection : uses
+    RoomDAO ..> DBConnection : uses
+    UserDAO ..> DBConnection : uses
+    UserServlet ..> PasswordUtil : uses
+    UserServlet ..> SessionUtil : uses
+    RoomServlet ..> SessionUtil : uses
+    ReservationServlet ..> SessionUtil : uses
+}
+
+@enduml
